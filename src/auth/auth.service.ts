@@ -1,6 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+
+//npm i bcryptjs
+import * as bcryptjs from 'bcryptjs'; //npm i --save-dev @types/bcryptjs
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -15,8 +18,29 @@ export class AuthService {
   ) {}
 
 
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new auth';
+  async create(createUserDto: CreateUserDto): Promise<User> {
+    try {
+
+      const { password, ...userData } = createUserDto; 
+
+      const newUser = new this.userModel({
+        password: await bcryptjs.hash(password, 10),
+        ...userData,
+      });
+
+      await newUser.save();
+
+      const { password:_, ...result } = newUser.toJSON();
+
+      return result;
+
+    } catch (error) {
+      if (error.code === 11000) {
+        throw new BadRequestException(`${ createUserDto.email } is already taken`);
+      }
+
+      throw  new InternalServerErrorException('Something went wrong');
+    }
   }
 
   findAll() {
