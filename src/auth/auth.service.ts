@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
@@ -8,6 +8,7 @@ import * as bcryptjs from 'bcryptjs'; //npm i --save-dev @types/bcryptjs
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
+import { LoginDto } from './dto/login.dto';
 
 
 @Injectable()
@@ -16,7 +17,6 @@ export class AuthService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
   ) {}
-
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     try {
@@ -41,6 +41,29 @@ export class AuthService {
 
       throw  new InternalServerErrorException('Something went wrong');
     }
+  }
+
+  async login(loginDto: LoginDto) {
+    const { email, password } = loginDto;
+
+    const user = await this.userModel.findOne({ email: email });
+
+    if (!user) {
+      throw new UnauthorizedException('Not valid credentials - email');
+    }
+
+    const isPasswordValid = bcryptjs.compareSync(password, user.password);  
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Not valid credentials - password');
+    }
+
+    const { password:_, ...result } = user.toJSON();
+
+    return { 
+      user: result,
+      token: 'fake-jwt-token',
+     };
   }
 
   findAll() {
