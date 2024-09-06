@@ -4,11 +4,13 @@ import { Model } from 'mongoose';
 
 //npm i bcryptjs
 import * as bcryptjs from 'bcryptjs'; //npm i --save-dev @types/bcryptjs
+import { JwtService } from '@nestjs/jwt'; //npm install --save @nestjs/jwt
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { LoginDto } from './dto/login.dto';
+import { JwtPayload } from './interfaces/jwtPayload';
 
 
 @Injectable()
@@ -16,6 +18,7 @@ export class AuthService {
 
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
+    private jwtService: JwtService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -62,7 +65,7 @@ export class AuthService {
 
     return { 
       user: result,
-      token: 'fake-jwt-token',
+      token: this.generateJwtToken({ id: user.id }),
      };
   }
 
@@ -80,5 +83,10 @@ export class AuthService {
 
   remove(id: number) {
     return `This action removes a #${id} auth`;
+  }
+
+  private generateJwtToken(payload: JwtPayload) { 
+    const token = this.jwtService.sign(payload);   
+    return token;
   }
 }
