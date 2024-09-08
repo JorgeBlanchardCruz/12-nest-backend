@@ -5,7 +5,6 @@ import { ConfigModule } from '@nestjs/config';
 
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-
 import { User, UserSchema } from './entities/user.entity';
 
 @Module({
@@ -17,8 +16,8 @@ import { User, UserSchema } from './entities/user.entity';
     MongooseModule.forFeature([
       {
         name: User.name,
-        schema: UserSchema,
-      },
+        schema: UserSchema
+      }
     ]),
 
     JwtModule.register({
@@ -26,6 +25,7 @@ import { User, UserSchema } from './entities/user.entity';
       secret: process.env.JWT_SEED,
       signOptions: { expiresIn: '6h' },
     }),
+
   ]
 })
 export class AuthModule {}
