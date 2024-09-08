@@ -2,15 +2,13 @@ import { BadRequestException, Injectable, InternalServerErrorException, Unauthor
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
-//npm i bcryptjs
-import * as bcryptjs from 'bcryptjs'; //npm i --save-dev @types/bcryptjs
+import * as bcryptjs from 'bcryptjs'; //npm i bcryptjs //npm i --save-dev @types/bcryptjs
 import { JwtService } from '@nestjs/jwt'; //npm install --save @nestjs/jwt
-
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { User } from './entities/user.entity';
-import { LoginDto } from './dto/login.dto';
 import { JwtPayload } from './interfaces/jwtPayload';
+
+import { User } from './entities/user.entity';
+import { LoginResponse } from '../../dist/auth/interfaces/login-response';
+import { CreateUserDto, UpdateUserDto, LoginDto, RegisterUserDto } from './dto';
 
 
 @Injectable()
@@ -46,7 +44,20 @@ export class AuthService {
     }
   }
 
-  async login(loginDto: LoginDto) {
+  async register(registerUserDto: RegisterUserDto): Promise<LoginResponse> {
+
+    const newUser = new CreateUserDto();
+    newUser.email = registerUserDto.email;
+    newUser.name = registerUserDto.name;
+    newUser.password = registerUserDto.password;
+    newUser.roles = ['user'];
+
+    const createdUser = await this.create(newUser);
+    return this.login({ email: createdUser.email, password: createdUser.password });
+  }
+
+  async login(loginDto: LoginDto): Promise<LoginResponse> {
+
     const { email, password } = loginDto;
 
     const user = await this.userModel.findOne({ email: email });
